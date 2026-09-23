@@ -1,0 +1,30 @@
+# 逆向工作目录：里面有第三方 app 的安装包和反编译产物，不随源码发布
+tools/
+
+# 本机路径，每台机器不一样
+local.properties
+
+# 签名材料，不进仓库（丢了就签不出能覆盖安装的更新包，自己留好）
+*.jks
+*.keystore
+keystore.properties
+
+# 构建产物
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# 系统
+.DS_Store
+Thumbs.db

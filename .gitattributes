@@ -1,0 +1,13 @@
+# 默认按文本处理，检出时统一用 LF
+* text=auto eol=lf
+
+# Windows 批处理必须是 CRLF，shell 脚本必须是 LF（否则 Linux/macOS 上跑不起来）
+*.bat text eol=crlf
+gradlew text eol=lf
+
+# 二进制，别碰
+*.jar binary
+*.jks binary
+*.keystore binary
+*.png binary
+*.apk binary

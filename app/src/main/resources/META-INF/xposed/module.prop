@@ -1,0 +1,10 @@
+id=clearapp
+name=ClearApp
+version=v1.0.0
+versionCode=1
+author=wuqiao309
+description=屏蔽 app 中无用的 tab、悬浮窗与页面组件。当前支持：番茄免费小说、红果免费短剧。
+minApiVersion=101
+targetApiVersion=102
+staticScope=true
+autoHotReload=false
