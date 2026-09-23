@@ -1,9 +1,9 @@
-package com.clearapp.module.hooks
+package io.github.wuqiao309.clearapp.hooks
 
-import com.clearapp.module.ClassResolver
-import com.clearapp.module.HookManager
-import com.clearapp.module.ModuleLog
-import com.clearapp.module.readField
+import io.github.wuqiao309.clearapp.ClassResolver
+import io.github.wuqiao309.clearapp.HookManager
+import io.github.wuqiao309.clearapp.ModuleLog
+import io.github.wuqiao309.clearapp.readField
 
 /** 书城主 tab 内的子 tab：屏蔽看剧、视频、商城。 */
 internal class BookstoreTabs(

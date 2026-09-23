@@ -1,4 +1,4 @@
-package com.clearapp.module
+package io.github.wuqiao309.clearapp
 
 import android.util.Log
 import io.github.libxposed.api.XposedModule

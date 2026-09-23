@@ -1,8 +1,8 @@
-package com.clearapp.module.hooks
+package io.github.wuqiao309.clearapp.hooks
 
-import com.clearapp.module.ClassResolver
-import com.clearapp.module.HookManager
-import com.clearapp.module.ModuleLog
+import io.github.wuqiao309.clearapp.ClassResolver
+import io.github.wuqiao309.clearapp.HookManager
+import io.github.wuqiao309.clearapp.ModuleLog
 
 /**
  * 底部主 tab。

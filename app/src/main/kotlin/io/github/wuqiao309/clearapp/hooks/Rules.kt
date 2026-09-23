@@ -1,4 +1,4 @@
-package com.clearapp.module.hooks
+package io.github.wuqiao309.clearapp.hooks
 
 /**
  * 各 app 的屏蔽策略。

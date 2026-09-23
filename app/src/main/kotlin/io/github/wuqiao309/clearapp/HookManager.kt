@@ -1,4 +1,4 @@
-package com.clearapp.module
+package io.github.wuqiao309.clearapp
 
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule

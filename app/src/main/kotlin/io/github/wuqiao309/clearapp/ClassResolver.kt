@@ -1,4 +1,4 @@
-package com.clearapp.module
+package io.github.wuqiao309.clearapp
 
 import java.lang.reflect.Array as ReflectArray
 import java.lang.reflect.Method

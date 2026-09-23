@@ -1,9 +1,9 @@
-package com.clearapp.module.hooks
+package io.github.wuqiao309.clearapp.hooks
 
-import com.clearapp.module.ClassResolver
-import com.clearapp.module.HookManager
-import com.clearapp.module.ModuleLog
-import com.clearapp.module.readField
+import io.github.wuqiao309.clearapp.ClassResolver
+import io.github.wuqiao309.clearapp.HookManager
+import io.github.wuqiao309.clearapp.ModuleLog
+import io.github.wuqiao309.clearapp.readField
 
 /** 「我的」主 tab：屏蔽金币/微信提现入口与推荐流。 */
 internal class ProfilePage(

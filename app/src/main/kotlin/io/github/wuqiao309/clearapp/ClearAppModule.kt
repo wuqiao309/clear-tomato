@@ -1,9 +1,9 @@
-package com.clearapp.module
+package io.github.wuqiao309.clearapp
 
 import android.app.Application
 import android.content.pm.PackageInfo
-import com.clearapp.module.hooks.FanqieHooks
-import com.clearapp.module.hooks.HongguoHooks
+import io.github.wuqiao309.clearapp.hooks.FanqieHooks
+import io.github.wuqiao309.clearapp.hooks.HongguoHooks
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.HotReloadingParam
 import io.github.libxposed.api.XposedModuleInterface.ModuleLoadedParam

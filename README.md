@@ -66,8 +66,8 @@
 模块自带 `staticScope`，作用域已经写死在这两个包上，命令行走一遍也行：
 
 ```bash
-adb shell "su -c '/data/adb/lspd/cli modules enable com.clearapp.module'"
-adb shell "su -c '/data/adb/lspd/cli scope set com.clearapp.module com.dragon.read/0 com.phoenix.read/0'"
+adb shell "su -c '/data/adb/lspd/cli modules enable io.github.wuqiao309.clearapp'"
+adb shell "su -c '/data/adb/lspd/cli scope set io.github.wuqiao309.clearapp com.dragon.read/0 com.phoenix.read/0'"
 ```
 
 > 装完模块后**第一次冷启可能仍跑的是旧版本**，Vector 需要一点时间重新读模块。再 force-stop 重启
@@ -115,7 +115,7 @@ export JAVA_HOME="C:\Program Files\Java\jdk-21"
 ## 目录
 
 ```
-app/src/main/kotlin/com/clearapp/module/
+app/src/main/kotlin/io/github/wuqiao309/clearapp/
   ClearAppModule.kt     入口：进程判定、装载对应 app 的规则
   HookManager.kt        挂 hook、记录、热重载时统一卸载
   ClassResolver.kt      按名字找类/方法/静态字段

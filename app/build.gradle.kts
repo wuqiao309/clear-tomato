@@ -17,11 +17,12 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.clearapp.module"
+    namespace = "io.github.wuqiao309.clearapp"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.clearapp.module"
+        // LSPosed 官方模块仓库要求包名是「自己拥有的域名」或 `io.github.<用户名>`，否则不予收录。
+        applicationId = "io.github.wuqiao309.clearapp"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
