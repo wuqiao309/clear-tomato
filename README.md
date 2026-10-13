@@ -132,6 +132,7 @@ app/src/main/kotlin/io/github/wuqiao309/clearapp/
     FloatingBall.kt     悬浮球 / 悬浮窗（两个 app 共用）
 
 docs/实现说明.md        每条规则挂在哪个方法上、为什么这么挂
+docs/升级维护.md        app 升级后规则失效时怎么发现、定位、修复、发版
 ```
 
 改「拦哪些」只需要动 `Rules.kt`。
