@@ -25,7 +25,7 @@ internal class ProfilePage(
      * null 等于「这张卡不存在」，比事后再去隐藏它的视图稳。
      */
     private fun hideCoinCard() {
-        val dispatch = resolver.findMethod(CARD_DISPATCHER, "f", CARD_INFO) ?: return
+        val dispatch = resolver.findMethod(CARD_DISPATCHER, "g", CARD_INFO) ?: return
         hooks.intercept(ID_COIN_CARD, dispatch) { chain ->
             val cardType = chain.getArg(0)?.let { cardTypeName(it) }
             if (cardType in Rules.Fanqie.MINE_CARDS_BLOCKED) {
@@ -69,7 +69,7 @@ internal class ProfilePage(
         }
     }
 
-    /** `vv3.d` 只有一个 CardType 字段，取它来判断这是哪张卡；字段名被混淆过，按候选名依次试。 */
+    /** 卡片信息对象上只有一个 CardType 字段，取它判断这是哪张卡；字段名被混淆过，按候选名依次试。 */
     private fun cardTypeName(cardInfo: Any): String? {
         val cardType = CARD_TYPE_FIELDS.firstNotNullOfOrNull { cardInfo.readField(it) }
         return (cardType as? Enum<*>)?.name ?: cardType?.toString()
@@ -77,14 +77,18 @@ internal class ProfilePage(
 
     private companion object {
         const val ID_COIN_CARD = "fanqie-mine-coin-card"
-        const val CARD_DISPATCHER = "lc4.c"
-        const val CARD_INFO = "vv3.d"
+        /** 卡片分发器。7.3.7 是 `lc4.c`、7.3.9 是 `sd4.c`（混淆包号每次升级都会变）。 */
+        const val CARD_DISPATCHER = "sd4.c"
+
+        /** 卡片信息类型，同上：7.3.7 是 `vv3.d`、7.3.9 是 `sw3.d`。 */
+        const val CARD_INFO = "sw3.d"
 
         const val ID_COIN_ENTRANCE = "fanqie-mine-coin-entrance"
         const val CELL_SERVICE = "com.dragon.read.component.biz.impl.mine.card.IBsMineTabCellService"
 
         const val ID_FEED = "fanqie-mine-recommend-feed"
-        const val FEED_GATE = "com.dragon.read.base.ssconfig.template.d"
+        /** 推荐流开关所在类。7.3.7 是包里的 `d`、7.3.9 是 `e`；方法名一直是 `d()`。 */
+        const val FEED_GATE = "com.dragon.read.base.ssconfig.template.e"
 
         val CARD_TYPE_FIELDS = listOf("a", "cardType", "f437455a")
     }

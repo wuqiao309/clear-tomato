@@ -32,6 +32,30 @@ class ClassResolver(private val classLoader: ClassLoader, private val log: Modul
     }
 
     /**
+     * 按名字和形参个数找方法，不看参数类型。
+     *
+     * 有些入口方法的参数多到十几个（例如挂件的 `tryShowFloatTips`），逐个列类型既啰嗦又容易写错；
+     * 而这类方法的名字来自**可读的接口**、参数个数也稳定，按这两样找就够了。
+     */
+    fun findMethodByArity(className: String, methodName: String, parameterCount: Int): Method? {
+        val owner = findClass(className) ?: return null
+        val match = owner.declaredMethods.firstOrNull {
+            it.name == methodName && it.parameterCount == parameterCount
+        }
+        if (match == null) {
+            val sameName = owner.declaredMethods.filter { it.name == methodName }
+            val detail = if (sameName.isEmpty()) {
+                "这个类上没有叫 $methodName 的方法"
+            } else {
+                "同名方法只有 ${sameName.joinToString { "${it.parameterCount} 个参数" }} 的"
+            }
+            log.warn("找不到方法 $className#$methodName 且有 $parameterCount 个参数（$detail）")
+            return null
+        }
+        return match.also { it.isAccessible = true }
+    }
+
+    /**
      * 按 [methodNames] 里的候选名依次找方法，取第一个找到的。
      *
      * 番茄和红果出自同一套代码但混淆结果不同：同一个挂载方法在番茄叫 `s`、在红果叫 `t`。参数表是

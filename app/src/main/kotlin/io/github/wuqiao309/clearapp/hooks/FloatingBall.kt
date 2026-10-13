@@ -1,5 +1,10 @@
 package io.github.wuqiao309.clearapp.hooks
 
+import android.app.Activity
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+import android.view.ViewGroup
 import io.github.wuqiao309.clearapp.ClassResolver
 import io.github.wuqiao309.clearapp.HookManager
 import io.github.wuqiao309.clearapp.ModuleLog
@@ -31,17 +36,26 @@ internal class FloatingBall(
     /**
      * 老式挂件（`com.bytedance.ug.sdk.novel.pendant`，红果首页右侧那个竖排「一键领」）。
      *
-     * 这套和上面 KMP 那套是两个独立的实现、各有各的控制器，所以得单独挂。全工程只有红果带它，
-     * 番茄上取不到目标会自己跳过。
+     * 这套和上面 KMP 那套是两个独立的实现，得单独挂。全工程只有红果带它，番茄上取不到目标会跳过。
+     *
+     * 挂法绕了一层：球本身那个类（7.3.7 叫 `v32.e`、7.3.9 叫 `c42.h0`）包号随版本变，但**建它的服务**
+     * 名字是可读的、稳定的。所以从服务的 `getPendantFloatTips` 拿回球对象，再对它那个**实际类**挂
+     * 显隐方法 —— 升级时不用重新找类名。
      */
     private fun hideLegacyPendant() {
         val attach = resolver.findMethod(
-            LEGACY_PENDANT,
+            LEGACY_PENDANT_CONTROLLER,
             "t",
             "android.view.ViewGroup", "int", "android.content.Context",
         )
         hooks.intercept("float-pendant-legacy-attach", attach) { chain ->
-            log.info("屏蔽一键领挂件")
+            log.info("屏蔽一键领挂件（挂载）")
+            null
+        }
+
+        val show = resolver.findMethodByArity(LEGACY_PENDANT_SERVICE, "tryShowFloatTips", 15)
+        hooks.intercept("float-pendant-legacy-show", show) { chain ->
+            log.info("屏蔽一键领挂件（入口）")
             null
         }
     }
@@ -49,12 +63,12 @@ internal class FloatingBall(
     /**
      * 信息流右下角的发帖悬浮球（一个没文字的圆按钮）。
      *
-     * `g` 是这个球唯一的显隐开关（里面做 alpha 动画再设可见性），`show()`/`hide()` 最终都落到它，
-     * 但显示它的路径不止 `show()` 一条 —— 所以挂这里而不是挂上层那几个入口。
-     * 把入参改成 false，等于「不管谁想显示都当没说过」。
+     * 挂的是球自己的显隐开关（内部把 alpha 从 0 动到 1 或反过来）。上层的 `show()`/`hide()` 最终都
+     * 落到它，但显示它的路径不止 `show()` 一条 —— 所以挂这里而不是挂入口。把入参改成 false，等于
+     * 「不管谁想显示都当没说过」。
      */
     private fun hideEditorBall() {
-        val toggle = resolver.findMethod(EDITOR_BALL, "g", "boolean")
+        val toggle = resolver.findMethod(EDITOR_BALL, "i", "boolean")
         hooks.intercept("float-editor-ball", toggle) { chain ->
             log.info("屏蔽发帖悬浮球")
             chain.proceed(arrayOf<Any?>(false))
@@ -106,13 +120,54 @@ internal class FloatingBall(
         }
     }
 
+    /**
+     * 【临时诊断】主界面起来后把视图树里**落在右侧中间那块**的节点打出来，用来认那个球是什么类。
+     * 定位完就删。
+     */
+    private fun probeViewTree() {
+        val onResume = resolver.findMethodByArity("android.app.Activity", "onResume", 0) ?: return
+        hooks.intercept("probe-viewtree", onResume) { chain ->
+            val result = chain.proceed()
+            (chain.thisObject as? Activity)?.let { activity ->
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val root = activity.window?.decorView ?: return@postDelayed
+                    log.info("视图树（右侧中部）：\n${ballRegionNodes(root).joinToString("\n")}")
+                }, 10_000)
+            }
+            result
+        }
+    }
+
+    private fun ballRegionNodes(root: View): List<String> {
+        val found = mutableListOf<String>()
+        val location = IntArray(2)
+
+        fun walk(view: View, depth: Int) {
+            if (depth > 30) return
+            view.getLocationOnScreen(location)
+            val (x, y) = location[0] to location[1]
+            if (x >= 1000 && y in 900..1500) {
+                found += "  ".repeat(depth) + "${view.javaClass.name}  @[$x,$y] ${view.width}x${view.height}"
+            }
+            if (view is ViewGroup) for (i in 0 until view.childCount) walk(view.getChildAt(i), depth + 1)
+        }
+
+        walk(root, 0)
+        return found
+    }
+
     private companion object {
         const val CONTINUE_BALL = "com.dragon.read.kmp.bookmall.floatview.FloatViewShowManager"
         const val MAIN_HELPER = "com.dragon.read.pages.main.z"
         const val GROWTH = "com.dragon.read.polaris.cold.start.l"
         const val PENDANT = "com.bytedance.ug.sdk.kmp.novel.pendant.manager.PendantController"
-        const val LEGACY_PENDANT = "r32.o"
-        const val EDITOR_BALL = "ma5.o"
+        const val LEGACY_PENDANT_SERVICE = "com.bytedance.ug.sdk.novel.pendant.PendantFloatTipsServiceImpl"
+
+        /** 老式挂件的控制器（7.3.7 叫 `r32.o`、7.3.9 叫 `y32.o`），球在它的挂载方法里贴到界面上。 */
+        const val LEGACY_PENDANT_CONTROLLER = "y32.o"
+
+        /** 发帖球。7.3.7 是 `ma5.o`、7.3.9 是 `dd5.o`（混淆包号每次升级都会变）。 */
+        const val EDITOR_BALL = "dd5.o"
 
         val GROWTH_ENTRIES = listOf(
             "m",

@@ -68,10 +68,26 @@ class HookManager(private val module: XposedModule, private val log: ModuleLog) 
         handles.clear()
     }
 
+    /**
+     * 挂 [owner] 的所有构造函数，[body] 里能拿到构造参数。
+     *
+     * 用来回答「这个视图到底是谁建的」—— 在回调里打一条调用栈，上层调用者一目了然。比翻反编译结果快，
+     * 也不受混淆影响。
+     */
+    fun interceptConstructors(id: String, owner: Class<*>, body: (Array<Any?>) -> Unit) {
+        owner.declaredConstructors.forEach { constructor ->
+            constructor.isAccessible = true
+            install(id, constructor) { chain ->
+                body(chain.args.toTypedArray())
+                chain.proceed()
+            }
+        }
+    }
+
     private fun install(
         id: String,
-        target: Method,
-        deoptimize: Boolean,
+        target: java.lang.reflect.Executable,
+        deoptimize: Boolean = false,
         hooker: XposedInterface.Hooker,
     ) {
         try {

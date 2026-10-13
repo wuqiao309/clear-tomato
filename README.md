@@ -48,8 +48,8 @@
 
 | app | 包名 | 版本 |
 | --- | --- | --- |
-| 番茄免费小说 | `com.dragon.read` | 7.3.7.33（versionCode 73733） |
-| 红果免费短剧 | `com.phoenix.read` | 7.3.7.32（versionCode 73732） |
+| 番茄免费小说 | `com.dragon.read` | 7.3.9.32（versionCode 73932） |
+| 红果免费短剧 | `com.phoenix.read` | 7.3.9.32（versionCode 73932） |
 
 > **app 升级后部分规则可能失效。** 模块对这些情况是容错的：目标方法找不到就跳过那一条并写日志，
 > 不会崩溃也不会影响别的规则。日志里搜 `跳过` 就能看出哪条失效了。

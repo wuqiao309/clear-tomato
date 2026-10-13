@@ -28,3 +28,6 @@ out/
 # 系统
 .DS_Store
 Thumbs.db
+
+# 本地打包产物
+dist/
