@@ -26,7 +26,8 @@ LOG_TAG="ClearApp/"
 
 build() {
     echo "== 构建 =="
-    (cd "$ROOT" && ./gradlew.bat --no-daemon assembleRelease -q)
+    # 用 Gradle daemon：实测改一个文件后热 daemon 只要 2 秒，--no-daemon 要 10 秒。
+    (cd "$ROOT" && ./gradlew.bat assembleRelease -q)
 }
 
 install_module() {
