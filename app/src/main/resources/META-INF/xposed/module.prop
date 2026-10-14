@@ -7,6 +7,7 @@ description=屏蔽 app 中无用的 tab、悬浮窗与页面组件。当前支�
 minApiVersion=101
 targetApiVersion=102
 staticScope=true
-# 打开热重载：重装模块 APK 后框架会自动让目标 app 重装规则，不用 force-stop 再启动。
-# 这是开发期最大的提速点。模块只有一个 java 入口类，满足热重载的前提。
-autoHotReload=true
+# 试过打开热重载（期望重装模块后目标 app 自动重挂规则、省掉 force-stop 重启），
+# **在 Vector 2.2 上实测没生效**：换了二进制重装模块后，跑着的目标 app pid 不变、一条重载日志都没有。
+# 原因没定位（可能框架没实现这个字段，也可能要重启框架才生效）。先保持关闭，别留个没验证的配置。
+autoHotReload=false

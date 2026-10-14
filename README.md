@@ -151,8 +151,8 @@ scripts/smali.sh        单个 dex 反汇编成 smali（jadx 漏类时的兜底�
 ./scripts/dev.sh shot          # 截图
 ```
 
-**热重载已打开**（`module.prop` 里 `autoHotReload=true`）：重装模块 APK 后框架会让目标 app 自动
-重挂规则，**不用 force-stop 再启动**。
+**改完代码要 force-stop 目标 app 再启动** —— 模块在进程启动时装 hook，app 不重启就还是旧的。
+（框架的 `autoHotReload` 字段在 Vector 2.2 上实测**不生效**，详见 `docs/升级维护.md`。）
 
 **jadx 会静默漏类** —— 反编译失败时不报错，产物里就是没有那个类，而别处引用它的代码还在。这个
 项目踩过至少 4 次（`t76.i`、`FloatViewShowManager`、`BaseHomeTab`、`MainFragmentActivity`）。
