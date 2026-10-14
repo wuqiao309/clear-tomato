@@ -24,6 +24,34 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ADB="$ROOT/tools/platform-tools/adb.exe"
 export JAVA_HOME="${JAVA_HOME:-C:\\Program Files\\Java\\jdk-21}"
 
+# ---- 单实例锁 ----------------------------------------------------------------
+#
+# 血泪教训：有一次一个挂住的后台任务被反复调用，炸出 **1545 个** dev.sh 进程同时在跑，
+# 每个都在 force-stop + 拉起目标 app —— 手机上就是「应用不停地自己切换」。
+# mkdir 是原子的，拿它当锁；同一时间只允许一个实例。
+LOCK_DIR="$ROOT/tools/work/.dev-running"
+mkdir -p "$ROOT/tools/work"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    # 锁超过 10 分钟当成陈旧的（上次被强杀之类的），清掉重来
+    if [ -n "$(find "$LOCK_DIR" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then
+        echo "发现超过 10 分钟的旧锁，清掉重来" >&2
+        rm -rf "$LOCK_DIR"
+        mkdir "$LOCK_DIR" 2>/dev/null || { echo "抢锁失败，退出" >&2; exit 1; }
+    else
+        echo "已经有一个 dev.sh 在跑，这次直接退出（避免叠着 force-stop / 拉起同一个 app）" >&2
+        exit 1
+    fi
+fi
+trap 'rm -rf "$LOCK_DIR"' EXIT
+
+# ---- adb 包装 ----------------------------------------------------------------
+#
+# 脚本绝不能挂死在一条 adb 上：设备掉线时 adb 会一直等，脚本就永远不退出。
+# 需要更长的（比如 install）单独用 ADB_LONG_TIMEOUT。
+# 注意用 "$ADB"（变量）而不是 adb —— 前者是路径，后者会被解析成这个函数自己，无限递归。
+adb() { timeout "${ADB_TIMEOUT:-60}" "$ADB" "$@"; }
+adb_long() { timeout "${ADB_LONG_TIMEOUT:-300}" "$ADB" "$@"; }
+
 FANQIE="com.dragon.read"
 HONGGUO="com.phoenix.read"
 
@@ -38,7 +66,7 @@ build() {
 
 install_module() {
     echo "== 安装模块 =="
-    "$ADB" install -r "$ROOT/app/build/outputs/apk/release/app-release.apk" | tail -1
+    adb_long install -r "$ROOT/app/build/outputs/apk/release/app-release.apk" | tail -1
 }
 
 # 等规则挂上。实测从启动到打完「本轮共挂载」只要 1~2 秒（主界面 2.1 秒就绪），
@@ -46,7 +74,7 @@ install_module() {
 wait_rules_mounted() {
     local deadline=$((SECONDS + 30))
     while [ $SECONDS -lt $deadline ]; do
-        "$ADB" logcat -d 2>/dev/null | grep -q "本轮共挂载" && return 0
+        adb logcat -d 2>/dev/null | grep -q "本轮共挂载" && return 0
         sleep 0.3
     done
     echo "等 30 秒没等到「本轮共挂载」，看看 log 子命令的输出" >&2
@@ -56,16 +84,16 @@ wait_rules_mounted() {
 restart() {
     local pkg="$1"
     sleep 2
-    "$ADB" shell am force-stop "$pkg"
+    adb shell am force-stop "$pkg"
     sleep 1
-    "$ADB" logcat -c
-    "$ADB" shell monkey -p "$pkg" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+    adb logcat -c
+    adb shell monkey -p "$pkg" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
     wait_rules_mounted
 }
 
 # 只挑出有诊断价值的行：挂上了什么、哪条失效了、哪条触发了。
 log() {
-    "$ADB" logcat -d 2>&1 \
+    adb logcat -d 2>&1 \
         | grep "$LOG_TAG" \
         | sed 's/.*ClearApp\/[^:]*: *//' \
         | grep -v '^com\.clearapp' \
@@ -84,7 +112,7 @@ dump_ui() {
     rm -f "$UI_XML"
     # uiautomator 在播放中的视频上拿不到 idle，会失败 —— 多试几次
     for i in $(seq 1 12); do
-        if "$ADB" shell uiautomator dump /sdcard/ui.xml 2>&1 | grep -q "dumped to"; then ok=1; break; fi
+        if adb shell uiautomator dump /sdcard/ui.xml 2>&1 | grep -q "dumped to"; then ok=1; break; fi
         sleep 1
     done
     if [ $ok -eq 0 ]; then
@@ -93,7 +121,7 @@ dump_ui() {
         echo "抓不到界面：页面在播视频时 uiautomator 拿不到 idle。把它暂停了再跑。" >&2
         return 1
     fi
-    if ! "$ADB" pull /sdcard/ui.xml "$(cygpath -w "$UI_XML")" >/dev/null 2>&1 || [ ! -f "$UI_XML" ]; then
+    if ! adb pull /sdcard/ui.xml "$(cygpath -w "$UI_XML")" >/dev/null 2>&1 || [ ! -f "$UI_XML" ]; then
         echo "拉取界面 XML 失败" >&2
         return 1
     fi
@@ -137,7 +165,7 @@ tap_bottom_tab() {
         echo "底栏上没找到「$label」" >&2
         return 1
     fi
-    "$ADB" shell input tap $coords >/dev/null 2>&1
+    adb shell input tap $coords >/dev/null 2>&1
     sleep 5
 }
 
@@ -231,9 +259,9 @@ smoke() {
 shot() {
     local out="$ROOT/tools/work/shots"
     mkdir -p "$out"
-    "$ADB" shell screencap -p /sdcard/dev-shot.png
+    adb shell screencap -p /sdcard/dev-shot.png
     # 同样要 cygpath：adb 是 Windows 程序，写不进 Git Bash 的 /c/... 形式
-    "$ADB" pull /sdcard/dev-shot.png "$(cygpath -w "$out")/" >/dev/null 2>&1
+    adb pull /sdcard/dev-shot.png "$(cygpath -w "$out")/" >/dev/null 2>&1
     echo "$out/dev-shot.png"
 }
 
