@@ -134,6 +134,7 @@ app/src/main/kotlin/io/github/wuqiao309/clearapp/
 
 docs/实现说明.md        每条规则挂在哪个方法上、为什么这么挂
 docs/升级维护.md        app 升级后规则失效时怎么发现、定位、修复、发版
+docs/调试片段.md        逆向卡住时的现成探针代码（视图树 / 构造函数栈 / addView）
 
 scripts/dev.sh          开发循环：构建 / 装模块 / 重启 app / 抓日志 / 截图 / dump 界面
 scripts/smali.sh        单个 dex 反汇编成 smali（jadx 漏类时的兜底）
@@ -150,6 +151,13 @@ scripts/smali.sh        单个 dex 反汇编成 smali（jadx 漏类时的兜底�
 ./scripts/dev.sh deploy hg     # 红果
 ./scripts/dev.sh ui            # 把当前页面的文字按坐标列出来
 ./scripts/dev.sh shot          # 截图
+```
+
+冒烟断言（底栏和子 tab 该在的在、该没的没了）：
+
+```bash
+./scripts/dev.sh smoke fq      # 番茄：开箱即用
+./scripts/dev.sh smoke hg      # 红果：先手动暂停首页视频，uiautomator 抓不到播放中的页面
 ```
 
 **改完代码要 force-stop 目标 app 再启动** —— 模块在进程启动时装 hook，app 不重启就还是旧的。
