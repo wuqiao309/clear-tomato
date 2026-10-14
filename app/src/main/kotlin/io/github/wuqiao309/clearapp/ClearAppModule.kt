@@ -26,7 +26,8 @@ class ClearAppModule : XposedModule() {
     override fun onModuleLoaded(param: ModuleLoadedParam) {
         processName = param.processName
         log.info(
-            "模块加载 process=$processName api=$apiVersion framework=$frameworkName/$frameworkVersion",
+            "模块加载 v${BuildConfig.VERSION_NAME}(${BuildConfig.VERSION_CODE}) " +
+                "process=$processName api=$apiVersion framework=$frameworkName/$frameworkVersion",
         )
     }
 

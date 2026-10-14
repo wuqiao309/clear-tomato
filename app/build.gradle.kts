@@ -58,6 +58,12 @@ android {
         }
     }
 
+    // 用来在启动日志里打出模块版本 —— 「装完模块第一次冷启可能仍跑旧版本」这个坑反复遇到，
+    // 日志里能直接看到跑的是哪一版，比对着 APK 时间戳猜强。
+    buildFeatures {
+        buildConfig = true
+    }
+
     // Xposed 模块的入口与元数据按 libxposed 约定从 resources 打包进 META-INF/xposed/。
     packaging {
         resources {
