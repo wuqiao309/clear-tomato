@@ -23,6 +23,9 @@ class ClearAppModule : XposedModule() {
 
     private var hooks: HookManager? = null
 
+    /** 按结构查 dex 的兜底。DexKit 的 bridge 要显式关，热重载时跟着放掉。 */
+    private var structural: StructuralFinder? = null
+
     override fun onModuleLoaded(param: ModuleLoadedParam) {
         processName = param.processName
         log.info(
@@ -48,7 +51,15 @@ class ClearAppModule : XposedModule() {
 
         val manager = HookManager(this, log)
         hooks = manager
-        val resolver = ClassResolver(param.classLoader, log)
+        val finder = StructuralFinder(
+            hostApkPath = param.applicationInfo.sourceDir,
+            moduleApkPath = runCatching { getModuleApplicationInfo()?.sourceDir }.getOrNull(),
+            hostDataDir = param.applicationInfo.dataDir,
+            classLoader = param.classLoader,
+            log = log,
+        )
+        structural = finder
+        val resolver = ClassResolver(param.classLoader, log, finder)
         when (packageName) {
             FANQIE -> FanqieHooks(manager, resolver, log).installAll()
             HONGGUO -> HongguoHooks(manager, resolver, log).installAll()
@@ -61,6 +72,8 @@ class ClearAppModule : XposedModule() {
         log.info("热重载：卸载 ${manager?.installedIds?.size ?: 0} 条规则")
         manager?.unhookAll()
         hooks = null
+        structural?.close()
+        structural = null
         return true
     }
 

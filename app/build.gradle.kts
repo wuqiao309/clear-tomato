@@ -75,4 +75,7 @@ android {
 dependencies {
     // 模块 API 由宿主框架提供，绝不能打进 APK。
     compileOnly(libs.libxposed.api)
+
+    // 按结构找类/方法的兜底（混淆名升级后会变，结构不会）。只在按名字找不到时才用到。
+    implementation(libs.dexkit)
 }

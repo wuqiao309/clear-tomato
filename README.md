@@ -130,6 +130,7 @@ app/src/main/kotlin/io/github/wuqiao309/clearapp/
     BookshelfTabs.kt    书架子 tab       ├ 番茄专属
     ProfilePage.kt      我的页           ┘
     FloatingBall.kt     悬浮球 / 悬浮窗（两个 app 共用）
+  StructuralFinder.kt   按结构查 dex 的兜底（混淆名失效时用 DexKit 找回目标）
 
 docs/实现说明.md        每条规则挂在哪个方法上、为什么这么挂
 docs/升级维护.md        app 升级后规则失效时怎么发现、定位、修复、发版

@@ -10,7 +10,28 @@ import java.lang.reflect.Method
  * 名字定位是最省事也最好排查的做法。找不到就返回 null 并记一条日志，让调用方决定是跳过还是放弃 ——
  * 版本对不上时模块应该降级成“部分生效”，而不是整体崩掉。
  */
-class ClassResolver(private val classLoader: ClassLoader, private val log: ModuleLog) {
+class ClassResolver(
+    private val classLoader: ClassLoader,
+    private val log: ModuleLog,
+    /** 按名字找不到时的兜底（按结构查 dex）。没传就只按名字找。 */
+    private val structural: StructuralFinder? = null,
+) {
+
+    /**
+     * 按名字找方法，**找不到再用结构特征兜底**。
+     *
+     * 混淆包号每次升级都变（`r32.o`→`y32.o`），但形参表和返回类型是框架类型、跨版本稳定。
+     * 平时按名字就找得到，不会去扫 dex；只有名字失效时才走结构这条路把它捞回来。
+     */
+    fun findMethodOrByShape(
+        className: String,
+        methodName: String,
+        parameterTypeNames: List<String>,
+        returnTypeName: String,
+        excluding: List<String> = emptyList(),
+    ): Method? = findMethod(className, methodName, *parameterTypeNames.toTypedArray())
+        ?: structural?.findMethod(parameterTypeNames, returnTypeName, excluding)
+
 
     /** 按全限定名加载类；失败返回 null。 */
     fun findClass(name: String): Class<*>? = try {

@@ -1,10 +1,5 @@
 package io.github.wuqiao309.clearapp.hooks
 
-import android.app.Activity
-import android.os.Handler
-import android.os.Looper
-import android.view.View
-import android.view.ViewGroup
 import io.github.wuqiao309.clearapp.ClassResolver
 import io.github.wuqiao309.clearapp.HookManager
 import io.github.wuqiao309.clearapp.ModuleLog
@@ -43,10 +38,16 @@ internal class FloatingBall(
      * 显隐方法 —— 升级时不用重新找类名。
      */
     private fun hideLegacyPendant() {
-        val attach = resolver.findMethod(
+        // 控制器是混淆名（7.3.7 叫 r32.o、7.3.9 叫 y32.o），所以名字找不着时按结构兜底：
+        // 「形参是 (ViewGroup, int, Context)、返回 void」这个方法在这场里是唯一的。
+        val attach = resolver.findMethodOrByShape(
             LEGACY_PENDANT_CONTROLLER,
             "t",
-            "android.view.ViewGroup", "int", "android.content.Context",
+            listOf("android.view.ViewGroup", "int", "android.content.Context"),
+            "void",
+            // 这个签名在红果里命中 4 个：框架的 Scene、上面那条 KMP 规则已经管的 PendantController、
+            // 一个接口声明，剩下才是它。排除项用可读名，跨版本稳定。
+            excluding = listOf(PENDANT),
         )
         hooks.intercept("float-pendant-legacy-attach", attach) { chain ->
             log.info("屏蔽一键领挂件（挂载）")
@@ -118,42 +119,6 @@ internal class FloatingBall(
                 null
             }
         }
-    }
-
-    /**
-     * 【临时诊断】主界面起来后把视图树里**落在右侧中间那块**的节点打出来，用来认那个球是什么类。
-     * 定位完就删。
-     */
-    private fun probeViewTree() {
-        val onResume = resolver.findMethodByArity("android.app.Activity", "onResume", 0) ?: return
-        hooks.intercept("probe-viewtree", onResume) { chain ->
-            val result = chain.proceed()
-            (chain.thisObject as? Activity)?.let { activity ->
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val root = activity.window?.decorView ?: return@postDelayed
-                    log.info("视图树（右侧中部）：\n${ballRegionNodes(root).joinToString("\n")}")
-                }, 10_000)
-            }
-            result
-        }
-    }
-
-    private fun ballRegionNodes(root: View): List<String> {
-        val found = mutableListOf<String>()
-        val location = IntArray(2)
-
-        fun walk(view: View, depth: Int) {
-            if (depth > 30) return
-            view.getLocationOnScreen(location)
-            val (x, y) = location[0] to location[1]
-            if (x >= 1000 && y in 900..1500) {
-                found += "  ".repeat(depth) + "${view.javaClass.name}  @[$x,$y] ${view.width}x${view.height}"
-            }
-            if (view is ViewGroup) for (i in 0 until view.childCount) walk(view.getChildAt(i), depth + 1)
-        }
-
-        walk(root, 0)
-        return found
     }
 
     private companion object {
