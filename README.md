@@ -133,9 +133,34 @@ app/src/main/kotlin/io/github/wuqiao309/clearapp/
 
 docs/实现说明.md        每条规则挂在哪个方法上、为什么这么挂
 docs/升级维护.md        app 升级后规则失效时怎么发现、定位、修复、发版
+
+scripts/dev.sh          开发循环：构建 / 装模块 / 重启 app / 抓日志 / 截图 / dump 界面
+scripts/smali.sh        单个 dex 反汇编成 smali（jadx 漏类时的兜底）
 ```
 
 改「拦哪些」只需要动 `Rules.kt`。
+
+## 开发效率
+
+开发时用 `scripts/dev.sh`，别手敲那串命令：
+
+```bash
+./scripts/dev.sh deploy fq     # 构建 + 装模块 + 重启番茄 + 看日志
+./scripts/dev.sh deploy hg     # 红果
+./scripts/dev.sh ui            # 把当前页面的文字按坐标列出来
+./scripts/dev.sh shot          # 截图
+```
+
+**热重载已打开**（`module.prop` 里 `autoHotReload=true`）：重装模块 APK 后框架会让目标 app 自动
+重挂规则，**不用 force-stop 再启动**。
+
+**jadx 会静默漏类** —— 反编译失败时不报错，产物里就是没有那个类，而别处引用它的代码还在。这个
+项目踩过至少 4 次（`t76.i`、`FloatViewShowManager`、`BaseHomeTab`、`MainFragmentActivity`）。
+碰上了用 `scripts/smali.sh` 把对应 dex 反汇编，smali 一定能出来，而且字段名方法名都写在里面：
+
+```bash
+./scripts/smali.sh tools/work/apk/dex/classes6.dex
+```
 
 ## 说明
 

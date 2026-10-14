@@ -7,4 +7,6 @@ description=屏蔽 app 中无用的 tab、悬浮窗与页面组件。当前支�
 minApiVersion=101
 targetApiVersion=102
 staticScope=true
-autoHotReload=false
+# 打开热重载：重装模块 APK 后框架会自动让目标 app 重装规则，不用 force-stop 再启动。
+# 这是开发期最大的提速点。模块只有一个 java 入口类，满足热重载的前提。
+autoHotReload=true
