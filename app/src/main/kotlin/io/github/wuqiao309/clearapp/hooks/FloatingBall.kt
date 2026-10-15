@@ -20,6 +20,8 @@ internal class FloatingBall(
 ) {
 
     fun install() {
+        probePopupWindows()
+        filterPopups()
         hideKmpContinueBall()
         hideMainPageFloatWindows()
         hideGrowthFloatingBars()
@@ -94,12 +96,73 @@ internal class FloatingBall(
         }
     }
 
-    /** 继续看悬浮球（KMP 版，会把自己塞进 Activity 的 content 里）。 */
+    /**
+     * 【临时诊断】那个「商城双11 好物节」弹窗**不走 PopProxy**（日志里一条都没有），所以换个入口找：
+     * Dialog / PopupWindow 的 `show()`。Compose 的弹窗底层也是 `Dialog`，所以能覆盖到。
+     *
+     * 挂上后等它再出现，日志里就有真实类名了。定位完删。
+     */
+    private fun probePopupWindows() {
+        listOf("android.app.Dialog", "android.widget.PopupWindow").forEach { className ->
+            val owner = resolver.findClass(className) ?: return@forEach
+            // 不限制参数个数：Dialog 是 show()，PopupWindow 是 showAtLocation(...)/showAsDropDown(...)
+            owner.declaredMethods
+                .filter { it.name.startsWith("show") }
+                .forEach { method ->
+                    hooks.intercept("probe-window:${className.substringAfterLast('.')}", method) { chain ->
+                        log.info("弹窗窗口：${chain.thisObject?.javaClass?.name}")
+                        chain.proceed()
+                    }
+                }
+        }
+    }
+
+    /**
+     * 弹窗拦截。
+     *
+     * 番茄所有弹窗都走 `PopProxy#popup(Activity, IProperties, ...)`，身份在第二个参数里 ——
+     * `PopDefiner.Pop` 那个枚举实现了 `IProperties`，`toString()` 就是弹窗名（共 162 个）。
+     *
+     * **每个弹窗都记一条日志**（不只是拦掉的）：万一要拦的那个不在名单里，日志里能看到它叫什么。
+     */
+    private fun filterPopups() {
+        val owner = resolver.findClass(POP_PROXY) ?: return
+        owner.declaredMethods.filter { it.name == "popup" }.forEach { method ->
+            val id = "fanqie-popup-${method.parameterCount}"
+            hooks.intercept(id, method) { chain ->
+                val name = chain.getArg(1)?.toString().orEmpty()
+                if (name in Rules.Fanqie.POPUPS_BLOCKED) {
+                    log.info("屏蔽弹窗：$name")
+                    null
+                } else {
+                    log.info("弹窗（放行）：$name")
+                    chain.proceed()
+                }
+            }
+        }
+    }
+
+    /**
+     * 左下角的「继续看剧」悬浮球（KMP 版）。
+     *
+     * 7.3.7 挂的是 `j(Context)`；7.3.9 把它改成了 `j(int, RecentReadModelKmp, Continuation)`（协程版），
+     * 名字对不上就整条失效了。所以三个口都堵：挂载入口、显示入口、以及「正在显示」的查询。
+     */
     private fun hideKmpContinueBall() {
-        hooks.intercept("float-kmp-continue-attach", resolver.findMethod(CONTINUE_BALL, "j", "android.content.Context")) { chain ->
-            log.info("屏蔽继续看悬浮球")
+        // 挂载：把 ComposeView 塞进 Activity content 的那个
+        hooks.intercept("float-kmp-continue-attach", resolver.findMethod(CONTINUE_BALL, "l", "android.content.Context")) { chain ->
+            log.info("屏蔽继续看剧球（挂载）")
             null
         }
+        // 显示入口
+        hooks.intercept(
+            "float-kmp-continue-show",
+            resolver.findMethod(CONTINUE_BALL, "r", RECENT_READ_MODEL),
+        ) { chain ->
+            log.info("屏蔽继续看剧球（显示）")
+            null
+        }
+        // 「正在显示吗」—— 别的地方会读它来决定要不要让位
         hooks.replaceBoolean("float-kmp-continue-showing", resolver.findMethod(CONTINUE_BALL, "o"), false)
     }
 
@@ -123,6 +186,12 @@ internal class FloatingBall(
 
     private companion object {
         const val CONTINUE_BALL = "com.dragon.read.kmp.bookmall.floatview.FloatViewShowManager"
+
+        /** 弹窗框架 —— 番茄所有弹窗都从这里走。 */
+        const val POP_PROXY = "com.dragon.read.pop.PopProxy"
+
+        /** 继续看球的模型类 —— 在 basenovel 那个 module 里，不在 floatview 包里。 */
+        const val RECENT_READ_MODEL = "com.dragon.read.kmp.basenovel.utils.pages.bookmall.data.RecentReadModelKmp"
         const val MAIN_HELPER = "com.dragon.read.pages.main.z"
         const val GROWTH = "com.dragon.read.polaris.cold.start.l"
         const val PENDANT = "com.bytedance.ug.sdk.kmp.novel.pendant.manager.PendantController"

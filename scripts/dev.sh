@@ -7,6 +7,7 @@
 #   ./scripts/dev.sh deploy both   两个都来一遍
 #   ./scripts/dev.sh build         只构建
 #   ./scripts/dev.sh log           只看日志（不重启任何东西）
+#   ./scripts/dev.sh popups        看弹窗战果：哪些被拦了、哪些放行了
 #   ./scripts/dev.sh smoke fq      冒烟：断言番茄界面该在的在、该没的没了
 #   ./scripts/dev.sh smoke hg      同上，红果
 #   ./scripts/dev.sh ui            把当前页面上的文字按位置打出来
@@ -66,7 +67,8 @@ build() {
 
 install_module() {
     echo "== 安装模块 =="
-    adb_long install -r "$ROOT/app/build/outputs/apk/release/app-release.apk" | tail -1
+    # 关掉路径自动转换之后，传给 adb 的本地路径必须自己 cygpath 转成 Windows 形式
+    adb_long install -r "$(cygpath -w "$ROOT/app/build/outputs/apk/release/app-release.apk")" | tail -1
 }
 
 # 等规则挂上。实测从启动到打完「本轮共挂载」只要 1~2 秒（主界面 2.1 秒就绪），
@@ -137,6 +139,12 @@ nodes() {
 # dump 出去的是哪个 app —— 用来防止「目标 app 还没切到前台就断言」
 dumped_package() {
     grep -oE 'package="[^"]+"' "$UI_XML" 2>/dev/null | head -1 | sed 's/package="//;s/"//'
+}
+
+# 弹窗战果：哪些被拦了、哪些放行了。规则有没有生效只看这里 —— 屏幕上没弹不算数。
+popups() {
+    adb logcat -d 2>&1         | grep -E "屏蔽弹窗|弹窗（放行）"         | sed 's/.*io.github[^:]*: *//'         | sed 's/^io\.github\.wuqiao309\.clearapp: //'         | sed 's/^[0-9-]* [0-9:.]* *[0-9]* *[0-9]* *[A-Z] *[^:]*: *//'         | sort | uniq -c | sort -rn
+    echo "--- 没有输出 = 这段时间内没有任何弹窗尝试（不代表规则生效）---"
 }
 
 ui() {
@@ -297,6 +305,7 @@ case "${1:-help}" in
         esac
         ;;
     log)  log ;;
+    popups) popups ;;
     smoke) smoke "${2:-fq}" ;;
     ui)   ui ;;
     shot) shot ;;

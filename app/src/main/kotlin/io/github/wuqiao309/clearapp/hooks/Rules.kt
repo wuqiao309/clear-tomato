@@ -43,6 +43,22 @@ internal object Rules {
             MyTabCell.DOUYIN_WALLET,
             MyTabCell.HONG_GUO_COIN,
         )
+
+        /**
+         * 要拦掉的弹窗，名字取自 `PopDefiner.Pop` 枚举（共 162 个）。
+         *
+         * 这是**导流到商城/带货**的那一族：营销弹窗、商城广告、优惠券催促。
+         * 日志里每个弹窗都会打名字（放行的也打），所以拦错了或者漏了，照日志里的名字改这份名单即可。
+         */
+        val POPUPS_BLOCKED = setOf(
+            "tt_ecom_marketing_popup",      // 电商营销弹窗 —— 最像「跳商场」的那个
+            "bookmall_ecom_popup",          // 商城弹窗
+            "bookmall_ad_popup",            // 商城广告弹窗
+            "bookmall_ecom_coupon_urge",    // 催领商城优惠券
+            "bookmall_ecom_qcpx_coupon",    // 商城券
+            "bookmall_caijing_popup",       // 财经弹窗
+            "ecommerce_coupon_dialog",      // 电商优惠券
+        )
     }
 
     /** 红果免费短剧 (`com.phoenix.read`)。 */
