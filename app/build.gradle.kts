@@ -25,8 +25,8 @@ android {
         applicationId = "io.github.wuqiao309.clearapp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.1.0"
     }
 
     signingConfigs {

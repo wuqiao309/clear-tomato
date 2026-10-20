@@ -4,7 +4,8 @@
 #
 #   ./scripts/dev.sh deploy fq     构建 + 装模块 + 重启番茄 + 看日志
 #   ./scripts/dev.sh deploy hg     同上，红果
-#   ./scripts/dev.sh deploy both   两个都来一遍
+#   ./scripts/dev.sh deploy yp     同上，智行
+#   ./scripts/dev.sh deploy both   番茄和红果都来一遍
 #   ./scripts/dev.sh build         只构建
 #   ./scripts/dev.sh log           只看日志（不重启任何东西）
 #   ./scripts/dev.sh ui            把当前页面上的文字按位置打出来
@@ -20,6 +21,7 @@ export JAVA_HOME="${JAVA_HOME:-C:\\Program Files\\Java\\jdk-21}"
 
 FANQIE="com.dragon.read"
 HONGGUO="com.phoenix.read"
+YIPIAO="com.yipiao"
 
 # 模块在目标 app 里装的规则会打到 logcat，tag 固定是 ClearApp/<进程名>。
 LOG_TAG="ClearApp/"
@@ -102,7 +104,8 @@ usage() {
 
   ./scripts/dev.sh deploy fq     构建 + 装模块 + 重启番茄 + 看日志
   ./scripts/dev.sh deploy hg     同上，红果
-  ./scripts/dev.sh deploy both   两个都来一遍
+  ./scripts/dev.sh deploy yp     同上，智行
+  ./scripts/dev.sh deploy both   番茄和红果都来一遍
   ./scripts/dev.sh build         只构建
   ./scripts/dev.sh log           只看日志（不重启任何东西）
   ./scripts/dev.sh ui            把当前页面上的文字按位置打出来
@@ -121,8 +124,9 @@ case "${1:-help}" in
         case "$target" in
             fq)   restart "$FANQIE";  log ;;
             hg)   restart "$HONGGUO"; log ;;
+            yp)   restart "$YIPIAO";  log ;;
             both) restart "$FANQIE";  log; echo; restart "$HONGGUO"; log ;;
-            *)    echo "用法: $0 deploy [fq|hg|both]" >&2; exit 2 ;;
+            *)    echo "用法: $0 deploy [fq|hg|yp|both]" >&2; exit 2 ;;
         esac
         ;;
     log)  log ;;

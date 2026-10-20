@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.pm.PackageInfo
 import io.github.wuqiao309.clearapp.hooks.FanqieHooks
 import io.github.wuqiao309.clearapp.hooks.HongguoHooks
+import io.github.wuqiao309.clearapp.hooks.YipiaoHooks
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.HotReloadingParam
 import io.github.libxposed.api.XposedModuleInterface.ModuleLoadedParam
@@ -63,6 +64,7 @@ class ClearAppModule : XposedModule() {
         when (packageName) {
             FANQIE -> FanqieHooks(manager, resolver, log).installAll()
             HONGGUO -> HongguoHooks(manager, resolver, log).installAll()
+            YIPIAO -> YipiaoHooks(manager, resolver, log).installAll()
         }
         log.info("本轮共挂载 ${manager.installedIds.size} 条规则: ${manager.installedIds}")
     }
@@ -106,6 +108,7 @@ class ClearAppModule : XposedModule() {
         const val UNKNOWN_PROCESS = "<unknown>"
         const val FANQIE = "com.dragon.read"
         const val HONGGUO = "com.phoenix.read"
-        val TARGET_PACKAGES = setOf(FANQIE, HONGGUO)
+        const val YIPIAO = "com.yipiao"
+        val TARGET_PACKAGES = setOf(FANQIE, HONGGUO, YIPIAO)
     }
 }
